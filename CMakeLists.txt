@@ -7,11 +7,13 @@ set(OpenGL_GL_PREFERENCE GLVND)
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 find_package(glfw3 REQUIRED)
+find_package(glm REQUIRED)
 
 set(ALL_LIBS
 	${OPENGL_LIBRARY}
 	glfw
 	GLEW
+	glm
 )
 
 add_definitions(

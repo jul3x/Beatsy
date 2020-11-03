@@ -5,32 +5,44 @@
 #ifndef BEATSY_UTILS_H
 #define BEATSY_UTILS_H
 
-class Vec3 {
+#include <glm/gtc/matrix_transform.hpp>
+
+class Mesh {
 public:
-    Vec3() = default;
-    Vec3(float x, float y, float z) : x(x), y(y), z(z) {}
+    Mesh() : model(glm::mat4(1.0f)) {}
 
-    Vec3 operator+(Vec3 const &obj) {
-        return Vec3(x + obj.x, y + obj.y, z + obj.z);
+    void setVertices(const std::vector<GLfloat>& vertices_) {
+        this->vertices = vertices_;
     }
 
-    Vec3 operator-(Vec3 const &obj) {
-        return Vec3(x - obj.x, y - obj.y, z - obj.z);
+    void setColors(const std::vector<GLfloat>& colors_) {
+        this->colors = colors_;
     }
 
-    float operator*(Vec3 const &obj) {
-        return x * obj.x + y * obj.y + z * obj.z;
+    void setModel(const glm::mat4& model_) {
+        this->model = model_;
     }
 
-    Vec3 operator*(float scalar) {
-        return Vec3(x * scalar, y * scalar, z * scalar);
+    const std::vector<GLfloat>& getVertices() const {
+        return this->vertices;
     }
 
-    Vec3 operator/(float scalar) {
-        return Vec3(x / scalar, y / scalar, z / scalar);
+    const std::vector<GLfloat>& getColors() const {
+        return this->colors;
     }
 
-    float x{0.f}, y{0.f}, z{0.f};
+    const glm::mat4& getModel() const {
+        return this->model;
+    }
+
+    void update() {
+        model = glm::rotate(model, 0.001f, {0.0, 1, 0});
+    }
+
+private:
+    std::vector<GLfloat> vertices{}, colors{};
+
+    glm::mat4 model;
 };
 
 
