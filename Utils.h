@@ -7,32 +7,56 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
+#include "ObjLoader.h"
+#include "Texture.h"
+
 class Mesh {
 public:
     Mesh() : model(glm::mat4(1.0f)) {}
 
-    void setVertices(const std::vector<GLfloat>& vertices_) {
+    explicit Mesh(const std::string& obj_path, GLuint texture_) {
+        loadObject(obj_path, texture_);
+    }
+
+    void loadObject(const std::string& obj_path, GLuint texture_) {
+        loadObj(obj_path.c_str(), this->vertices, this->uv, this->normals);
+        texture = texture_;
+    }
+
+    void setVertices(const std::vector<glm::vec3>& vertices_) {
         this->vertices = vertices_;
     }
 
-    void setColors(const std::vector<GLfloat>& colors_) {
-        this->colors = colors_;
+    void setUV(const std::vector<glm::vec2>& uv_) {
+        this->uv = uv_;
+    }
+
+    void setNormals(const std::vector<glm::vec3>& normals_) {
+        this->normals = normals_;
     }
 
     void setModel(const glm::mat4& model_) {
         this->model = model_;
     }
 
-    const std::vector<GLfloat>& getVertices() const {
+    const std::vector<glm::vec3>& getVertices() const {
         return this->vertices;
     }
 
-    const std::vector<GLfloat>& getColors() const {
-        return this->colors;
+    const std::vector<glm::vec2>& getUV() const {
+        return this->uv;
+    }
+
+    const std::vector<glm::vec3>& getNormals() const {
+        return this->normals;
     }
 
     const glm::mat4& getModel() const {
         return this->model;
+    }
+
+    GLuint getTexture() const {
+        return this->texture;
     }
 
     void update() {
@@ -40,9 +64,12 @@ public:
     }
 
 private:
-    std::vector<GLfloat> vertices{}, colors{};
+    std::vector<glm::vec3> vertices{}, normals{};
+    std::vector<glm::vec2> uv{};
 
-    glm::mat4 model;
+    glm::mat4 model{};
+    GLuint texture{};
+
 };
 
 
