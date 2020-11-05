@@ -69,22 +69,12 @@ public:
         this->model = model_;
     }
 
-    void setOffsets(size_t vert_offset, size_t uv_offset, size_t normal_offset) {
-        vertex_buffer_offset = vert_offset;
-        uv_buffer_offset = uv_offset;
-        normal_buffer_offset = normal_offset;
+    void setOffset(size_t indices) {
+        indices_offset = indices;
     }
 
-    GLuint getVerticesOffset() const {
-        return this->vertex_buffer_offset;
-    }
-
-    GLuint getUVOffset() const {
-        return this->uv_buffer_offset;
-    }
-
-    GLuint getNormalsOffset() const {
-        return this->normal_buffer_offset;
+    size_t getOffset() const {
+        return indices_offset;
     }
 
     const std::vector<glm::vec3>& getVertices() const {
@@ -114,7 +104,7 @@ public:
 private:
     std::shared_ptr<Model> data;
 
-    size_t vertex_buffer_offset{}, uv_buffer_offset{}, normal_buffer_offset{};
+    size_t indices_offset{};
 
     glm::mat4 model{};
     GLuint texture{};

@@ -9,20 +9,20 @@ int main() {
     auto window_size = glm::vec2(1280, 720);
     WindowWrapper window_wrapper(window_size, "Beatsy Visualizer");
     Camera camera(window_size);
-    camera.setProjection(120.0f, 0.1f, 100.0f);
+    camera.setProjection(90.0f, 0.1f, 100.0f);
     camera.setView({3, 3, 3}, {0, 0, 0}, {0, 1, 0});
 
     window_wrapper.bindCamera(&camera);
 
-    WindowWrapper::colorize(0.1, 0.1, 0.1, 0);
+    WindowWrapper::colorize(0.02, 0.02, 0.02, 0);
 
     window_wrapper.loadShaders("shaders/vertex.vert", "shaders/fragment.frag");
 
-    std::unique_ptr<Mesh> meshes[1001];
+    std::unique_ptr<Mesh> meshes[1000];
 
     std::random_device rd;
     std::mt19937 gen;
-    std::uniform_int_distribution<int> distrib(-50.0f, 50.0f);
+    std::uniform_int_distribution<int> distrib(-100.0f, 100.0f);
 
     GLuint texture = loadBMP_custom("uvtemplate.bmp");
     GLuint texture_2 = loadBMP_custom("uvtemplate_2.bmp");

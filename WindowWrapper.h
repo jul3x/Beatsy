@@ -17,6 +17,7 @@
 #include "Camera.h"
 #include "Shader.h"
 #include "Utils.h"
+#include "VBOIndexer.h"
 
 
 class WindowWrapper {
@@ -61,6 +62,7 @@ public:
         glGenBuffers(1, &vertex_buffer);
         glGenBuffers(1, &uv_buffer);
         glGenBuffers(1, &normal_buffer);
+        glGenBuffers(1, &element_buffer);
     }
 
     void bindCamera(Camera* camera_) {
@@ -80,34 +82,39 @@ public:
             throw std::runtime_error("Camera not initialized!");
         }
 
-        for (size_t i = 0; i < meshes.size(); ++i)
+        glEnableVertexAttribArray(0);
+        glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+
+        glEnableVertexAttribArray(1);
+        glBindBuffer(GL_ARRAY_BUFFER, uv_buffer);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
+
+        glEnableVertexAttribArray(2);
+        glBindBuffer(GL_ARRAY_BUFFER, normal_buffer);
+        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);
+
+        glUniformMatrix4fv(view_uniform, 1, GL_FALSE, &camera->getView()[0][0]);
+        glUniform3f(light_uniform, camera->getPosition().x, camera->getPosition().y, camera->getPosition().z);
+        for (auto & mesh : meshes)
         {
-            glm::mat4 mvp = camera->getProjection() * camera->getView() * meshes[i]->getModel();
-
+            glm::mat4 mvp = camera->getProjection() * camera->getView() * mesh->getModel();
             glUniformMatrix4fv(mvp_uniform, 1, GL_FALSE, &mvp[0][0]);
-            glUniformMatrix4fv(model_uniform, 1, GL_FALSE, &meshes[i]->getModel()[0][0]);
-            glUniformMatrix4fv(view_uniform, 1, GL_FALSE, &camera->getView()[0][0]);
-            glUniform3f(light_uniform, camera->getPosition().x, camera->getPosition().y, camera->getPosition().z);
+            glUniformMatrix4fv(model_uniform, 1, GL_FALSE, &mesh->getModel()[0][0]);
+
+
             glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, meshes[i]->getTexture());
-            glUniform1i(meshes[i]->getTexture(), 0);
+            glBindTexture(GL_TEXTURE_2D, mesh->getTexture());
+            glUniform1i(mesh->getTexture(), 0);
 
-            glEnableVertexAttribArray(0);
-            glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)meshes[i]->getVerticesOffset());
-
-            glEnableVertexAttribArray(1);
-            glBindBuffer(GL_ARRAY_BUFFER, uv_buffer);
-            glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)meshes[i]->getUVOffset());
-
-            glEnableVertexAttribArray(2);
-            glBindBuffer(GL_ARRAY_BUFFER, normal_buffer);
-            glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (void*)meshes[i]->getNormalsOffset());
-
-            glDrawArrays(GL_TRIANGLES, 0, meshes[i]->getVertices().size());
-
-            glDisableVertexAttribArray(0);
+            glDrawElements(GL_TRIANGLES, mesh->getVertices().size(), GL_UNSIGNED_SHORT, (void*)mesh->getOffset());
         }
+
+        glDisableVertexAttribArray(0);
+        glDisableVertexAttribArray(1);
+        glDisableVertexAttribArray(2);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -115,13 +122,10 @@ public:
 
     void terminate() {
         glDeleteProgram(shader);
-
         glDeleteBuffers(1, &vertex_buffer);
-
         glDeleteBuffers(1, &uv_buffer);
-
         glDeleteBuffers(1, &normal_buffer);
-
+        glDeleteBuffers(1, &element_buffer);
         glDeleteVertexArrays(1, &vertex_array);
         glfwTerminate();
     }
@@ -131,13 +135,10 @@ public:
     }
 
     void bindMesh(Mesh& mesh) {
-        mesh.setOffsets(vertices.size() * sizeof(glm::vec3),
-                        uvs.size() * sizeof(glm::vec2),
-                        normals.size() * sizeof(glm::vec3));
+        mesh.setOffset(indices.size() * sizeof(unsigned short));
         meshes.emplace_back(&mesh);
-        vertices.insert(vertices.end(), mesh.getVertices().begin(), mesh.getVertices().end());
-        uvs.insert(uvs.end(), mesh.getUV().begin(), mesh.getUV().end());
-        normals.insert(normals.end(), mesh.getNormals().begin(), mesh.getNormals().end());
+
+        indexVBO(mesh.getVertices(), mesh.getUV(), mesh.getNormals(), indices, vertices, uvs, normals);
     }
 
     void bindBuffers() {
@@ -149,6 +150,9 @@ public:
 
         glBindBuffer(GL_ARRAY_BUFFER, normal_buffer);
         glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), &normals[0], GL_STATIC_DRAW);
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned short), &indices[0] , GL_STATIC_DRAW);
     }
 
     void loadShaders(const std::string& vert, const std::string& frag) {
@@ -200,11 +204,12 @@ private:
     Camera* camera{nullptr};
 
     std::vector<Mesh*> meshes;
+    std::vector<unsigned short> indices;
     std::vector<glm::vec3> vertices, normals;
     std::vector<glm::vec2> uvs;
-    GLuint vertex_buffer, uv_buffer, normal_buffer;
+    GLuint vertex_buffer{}, uv_buffer{}, normal_buffer{}, element_buffer{};
 
-    GLuint mvp_uniform, view_uniform, model_uniform, light_uniform, texture_uniform;
+    GLuint mvp_uniform{}, view_uniform{}, model_uniform{}, light_uniform{}, texture_uniform{};
 };
 
 #endif //BEATSY_WINDOWWRAPPER_H
