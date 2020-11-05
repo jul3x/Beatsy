@@ -6,7 +6,7 @@
 
 
 int main() {
-    auto window_size = glm::vec2(1280, 720);
+    auto window_size = glm::vec2(1000, 700);
     WindowWrapper window_wrapper(window_size, "Beatsy Visualizer");
     Camera camera(window_size);
     camera.setProjection(90.0f, 0.1f, 100.0f);
@@ -17,6 +17,7 @@ int main() {
     WindowWrapper::colorize(0.02, 0.02, 0.02, 0);
 
     window_wrapper.loadShaders("shaders/vertex.vert", "shaders/fragment.frag");
+    window_wrapper.loadScreenShaders("shaders/screen.vert", "shaders/screen.frag");
 
     std::unique_ptr<Mesh> meshes[1000];
 
@@ -43,7 +44,7 @@ int main() {
     do {
         double current_time = glfwGetTime();
         double time_elapsed = current_time - last_time;
-        printf("%lf FPS\n", 1.0 / time_elapsed);
+//        printf("%lf FPS\n", 1.0 / time_elapsed);
 
         camera.updateMouse(window_wrapper.getMousePos(), time_elapsed);
         camera.updateKeys(window_wrapper.getKeysPressed(), time_elapsed);

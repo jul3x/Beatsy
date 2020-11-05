@@ -29,6 +29,7 @@ public:
         }
 
         glfwWindowHint(GLFW_SAMPLES, 4);
+        glEnable(GL_MULTISAMPLE);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
@@ -55,14 +56,54 @@ public:
         glGenVertexArrays(1, &vertex_array);
         glBindVertexArray(vertex_array);
 
+        glGenFramebuffers(1, &frame_buffer);
+        glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer);
+        glGenTextures(1, &tex_color_buffer);
+        glBindTexture(GL_TEXTURE_2D, tex_color_buffer);
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, size.x, size.y, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex_color_buffer, 0);
+        glGenRenderbuffers(1, &depth_render_buffer);
+        glBindRenderbuffer(GL_RENDERBUFFER, depth_render_buffer);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, size.x, size.y);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_render_buffer);
+
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, tex_color_buffer, 0);
+
+        GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
+        glDrawBuffers(1, DrawBuffers);
+
+        if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+            throw std::runtime_error("Framebuffer init error!");
+
+
         glEnable(GL_DEPTH_TEST);
-//        glEnable(GL_CULL_FACE);
+        glEnable(GL_CULL_FACE);
         glDepthFunc(GL_LESS);
 
         glGenBuffers(1, &vertex_buffer);
         glGenBuffers(1, &uv_buffer);
         glGenBuffers(1, &normal_buffer);
         glGenBuffers(1, &element_buffer);
+
+        glGenVertexArrays(1, &vao_frame_buffer);
+        glBindVertexArray(vao_frame_buffer);
+
+        static const GLfloat g_quad_vertex_buffer_data[] = {
+                -1.0f, -1.0f, 0.0f,
+                1.0f, -1.0f, 0.0f,
+                -1.0f,  1.0f, 0.0f,
+                -1.0f,  1.0f, 0.0f,
+                1.0f, -1.0f, 0.0f,
+                1.0f,  1.0f, 0.0f,
+        };
+
+        glGenBuffers(1, &vertices_frame_buffer);
+        glBindBuffer(GL_ARRAY_BUFFER, vertices_frame_buffer);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(g_quad_vertex_buffer_data), g_quad_vertex_buffer_data, GL_STATIC_DRAW);
     }
 
     void bindCamera(Camera* camera_) {
@@ -81,6 +122,13 @@ public:
         if (camera == nullptr) {
             throw std::runtime_error("Camera not initialized!");
         }
+
+        glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer);
+        glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glBindVertexArray(vertex_array);
+        glEnable(GL_DEPTH_TEST);
+        glUseProgram(shader);
+        glViewport(0, 0, window_size.x, window_size.y);
 
         glEnableVertexAttribArray(0);
         glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
@@ -104,7 +152,6 @@ public:
             glUniformMatrix4fv(mvp_uniform, 1, GL_FALSE, &mvp[0][0]);
             glUniformMatrix4fv(model_uniform, 1, GL_FALSE, &mesh->getModel()[0][0]);
 
-
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, mesh->getTexture());
             glUniform1i(mesh->getTexture(), 0);
@@ -116,6 +163,24 @@ public:
         glDisableVertexAttribArray(1);
         glDisableVertexAttribArray(2);
 
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindVertexArray(vao_frame_buffer);
+        glViewport(0, 0, window_size.x, window_size.y);
+        glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        glDisable(GL_DEPTH_TEST);
+        glUseProgram(screen_shader);
+        glActiveTexture(GL_TEXTURE0);
+
+        glBindTexture(GL_TEXTURE_2D, tex_color_buffer);
+        glUniform1i(frame_texture_uniform, 0);
+        glEnableVertexAttribArray(0);
+        glBindBuffer(GL_ARRAY_BUFFER, vertices_frame_buffer);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        glDisableVertexAttribArray(0);
+
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
@@ -126,7 +191,13 @@ public:
         glDeleteBuffers(1, &uv_buffer);
         glDeleteBuffers(1, &normal_buffer);
         glDeleteBuffers(1, &element_buffer);
+        glDeleteBuffers(1, &tex_color_buffer);
+        glDeleteBuffers(1, &depth_render_buffer);
+        glDeleteBuffers(1, &vao_frame_buffer);
+        glDeleteBuffers(1, &vertices_frame_buffer);
+        glDeleteVertexArrays(1, &vao_frame_buffer);
         glDeleteVertexArrays(1, &vertex_array);
+        glDeleteFramebuffers(1, &frame_buffer);
         glfwTerminate();
     }
 
@@ -165,6 +236,12 @@ public:
         texture_uniform = glGetUniformLocation(shader, "myTextureSampler");
     }
 
+    void loadScreenShaders(const std::string& vert, const std::string& frag) {
+        screen_shader = LoadShaders(vert, frag);
+        glUseProgram(screen_shader);
+        frame_texture_uniform = glGetUniformLocation(screen_shader, "renderedTexture");
+    }
+
     glm::vec2 getMousePos() const {
         double x_pos, y_pos;
         glfwGetCursorPos(window, &x_pos, &y_pos);
@@ -198,7 +275,8 @@ public:
 private:
     GLFWwindow* window{nullptr};
     GLuint vertex_array{};
-    GLuint shader{};
+    GLuint shader{}, screen_shader{};
+    GLuint frame_buffer{}, tex_color_buffer{}, depth_render_buffer{}, vao_frame_buffer{}, vertices_frame_buffer{};
 
     glm::vec2 window_size{};
     Camera* camera{nullptr};
@@ -210,6 +288,7 @@ private:
     GLuint vertex_buffer{}, uv_buffer{}, normal_buffer{}, element_buffer{};
 
     GLuint mvp_uniform{}, view_uniform{}, model_uniform{}, light_uniform{}, texture_uniform{};
+    GLuint frame_texture_uniform{};
 };
 
 #endif //BEATSY_WINDOWWRAPPER_H
