@@ -57,6 +57,10 @@ public:
         glEnable(GL_DEPTH_TEST);
 //        glEnable(GL_CULL_FACE);
         glDepthFunc(GL_LESS);
+
+        glGenBuffers(1, &vertex_buffer);
+        glGenBuffers(1, &uv_buffer);
+        glGenBuffers(1, &normal_buffer);
     }
 
     void bindCamera(Camera* camera_) {
@@ -89,16 +93,16 @@ public:
             glUniform1i(meshes[i]->getTexture(), 0);
 
             glEnableVertexAttribArray(0);
-            glBindBuffer(GL_ARRAY_BUFFER, vertex_buffers[i]);
-            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+            glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)meshes[i]->getVerticesOffset());
 
             glEnableVertexAttribArray(1);
-            glBindBuffer(GL_ARRAY_BUFFER, uv_buffers[i]);
-            glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
+            glBindBuffer(GL_ARRAY_BUFFER, uv_buffer);
+            glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)meshes[i]->getUVOffset());
 
             glEnableVertexAttribArray(2);
-            glBindBuffer(GL_ARRAY_BUFFER, normal_buffers[i]);
-            glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+            glBindBuffer(GL_ARRAY_BUFFER, normal_buffer);
+            glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (void*)meshes[i]->getNormalsOffset());
 
             glDrawArrays(GL_TRIANGLES, 0, meshes[i]->getVertices().size());
 
@@ -112,20 +116,11 @@ public:
     void terminate() {
         glDeleteProgram(shader);
 
-        for (auto buffer : vertex_buffers)
-        {
-            glDeleteBuffers(1, &buffer);
-        }
+        glDeleteBuffers(1, &vertex_buffer);
 
-        for (auto buffer : uv_buffers)
-        {
-            glDeleteBuffers(1, &buffer);
-        }
+        glDeleteBuffers(1, &uv_buffer);
 
-        for (auto buffer : normal_buffers)
-        {
-            glDeleteBuffers(1, &buffer);
-        }
+        glDeleteBuffers(1, &normal_buffer);
 
         glDeleteVertexArrays(1, &vertex_array);
         glfwTerminate();
@@ -136,23 +131,24 @@ public:
     }
 
     void bindMesh(Mesh& mesh) {
+        mesh.setOffsets(vertices.size() * sizeof(glm::vec3),
+                        uvs.size() * sizeof(glm::vec2),
+                        normals.size() * sizeof(glm::vec3));
         meshes.emplace_back(&mesh);
-        vertex_buffers.emplace_back();
-        uv_buffers.emplace_back();
-        normal_buffers.emplace_back();
+        vertices.insert(vertices.end(), mesh.getVertices().begin(), mesh.getVertices().end());
+        uvs.insert(uvs.end(), mesh.getUV().begin(), mesh.getUV().end());
+        normals.insert(normals.end(), mesh.getNormals().begin(), mesh.getNormals().end());
+    }
 
-        glGenBuffers(1, &vertex_buffers.back());
-        glGenBuffers(1, &uv_buffers.back());
-        glGenBuffers(1, &normal_buffers.back());
+    void bindBuffers() {
+        glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), &vertices[0], GL_STATIC_DRAW);
 
-        glBindBuffer(GL_ARRAY_BUFFER, vertex_buffers.back());
-        glBufferData(GL_ARRAY_BUFFER, mesh.getVertices().size() * sizeof(glm::vec3), &mesh.getVertices()[0], GL_STATIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, uv_buffer);
+        glBufferData(GL_ARRAY_BUFFER, uvs.size() * sizeof(glm::vec2), &uvs[0], GL_STATIC_DRAW);
 
-        glBindBuffer(GL_ARRAY_BUFFER, uv_buffers.back());
-        glBufferData(GL_ARRAY_BUFFER, mesh.getUV().size() * sizeof(glm::vec2), &mesh.getUV()[0], GL_STATIC_DRAW);
-
-        glBindBuffer(GL_ARRAY_BUFFER, normal_buffers.back());
-        glBufferData(GL_ARRAY_BUFFER, mesh.getNormals().size() * sizeof(glm::vec3), &mesh.getNormals()[0], GL_STATIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, normal_buffer);
+        glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), &normals[0], GL_STATIC_DRAW);
     }
 
     void loadShaders(const std::string& vert, const std::string& frag) {
@@ -204,7 +200,9 @@ private:
     Camera* camera{nullptr};
 
     std::vector<Mesh*> meshes;
-    std::vector<GLuint> vertex_buffers, uv_buffers, normal_buffers;
+    std::vector<glm::vec3> vertices, normals;
+    std::vector<glm::vec2> uvs;
+    GLuint vertex_buffer, uv_buffer, normal_buffer;
 
     GLuint mvp_uniform, view_uniform, model_uniform, light_uniform, texture_uniform;
 };

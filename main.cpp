@@ -9,7 +9,7 @@ int main() {
     auto window_size = glm::vec2(1280, 720);
     WindowWrapper window_wrapper(window_size, "Beatsy Visualizer");
     Camera camera(window_size);
-    camera.setProjection(90.0f, 0.1f, 100.0f);
+    camera.setProjection(120.0f, 0.1f, 100.0f);
     camera.setView({3, 3, 3}, {0, 0, 0}, {0, 1, 0});
 
     window_wrapper.bindCamera(&camera);
@@ -18,7 +18,7 @@ int main() {
 
     window_wrapper.loadShaders("shaders/vertex.vert", "shaders/fragment.frag");
 
-    Mesh meshes[1000];
+    std::unique_ptr<Mesh> meshes[1001];
 
     std::random_device rd;
     std::mt19937 gen;
@@ -26,20 +26,24 @@ int main() {
 
     GLuint texture = loadBMP_custom("uvtemplate.bmp");
     GLuint texture_2 = loadBMP_custom("uvtemplate_2.bmp");
+    auto cube = std::make_shared<Model>("cube.obj");
+    auto chair = std::make_shared<Model>("FinalBaseMesh.obj");
     for (auto &mesh : meshes)
     {
         static int i = 0;
-        mesh.loadObject("FinalBaseMesh.obj", i % 2 == 0 ? texture : texture_2);
-        mesh.setModel(glm::translate(glm::mat4(1.0f), {distrib(gen), distrib(gen), distrib(gen)}));
-        window_wrapper.bindMesh(mesh);
+        mesh = std::make_unique<Mesh>(i % 2 == 0 ? cube : chair, i % 2 == 0 ? texture : texture_2);
+        mesh->setModel(glm::translate(glm::mat4(1.0f), {distrib(gen), distrib(gen), distrib(gen)}));
+        window_wrapper.bindMesh(*mesh);
         ++i;
     }
 
+    window_wrapper.bindBuffers()
+    ;
     double last_time = glfwGetTime();
     do {
         double current_time = glfwGetTime();
         double time_elapsed = current_time - last_time;
-//        printf("%lf FPS\n", 1.0 / time_elapsed);
+        printf("%lf FPS\n", 1.0 / time_elapsed);
 
         camera.updateMouse(window_wrapper.getMousePos(), time_elapsed);
         camera.updateKeys(window_wrapper.getKeysPressed(), time_elapsed);
@@ -47,7 +51,7 @@ int main() {
 
         for (auto &mesh : meshes)
         {
-            mesh.update();
+            mesh->update();
         }
 
         WindowWrapper::clear();
