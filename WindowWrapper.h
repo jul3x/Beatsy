@@ -106,6 +106,10 @@ public:
         glBufferData(GL_ARRAY_BUFFER, sizeof(g_quad_vertex_buffer_data), g_quad_vertex_buffer_data, GL_STATIC_DRAW);
     }
 
+    void setRenderType(GLuint render_t) {
+        render_type = render_t;
+    }
+
     void bindCamera(Camera* camera_) {
         camera = camera_;
     }
@@ -129,6 +133,27 @@ public:
         glEnable(GL_DEPTH_TEST);
         glUseProgram(shader);
         glViewport(0, 0, window_size.x, window_size.y);
+
+        {
+            // update grid
+
+
+            static float timer = 0.0f;
+            timer += 0.003f;
+
+            int i = 0;
+            for (int j = 0; j < 25; ++j)
+            {
+                for (; i < (j+1) * 20; ++i)
+                {
+                    vertices[i].y = 10 / (float)j *std::sin(timer + i * 2 * M_PI / 20);
+                }
+            }
+
+            glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+            glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), &vertices[0], GL_STATIC_DRAW);
+        }
+
 
         glEnableVertexAttribArray(0);
         glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
@@ -156,7 +181,7 @@ public:
             glBindTexture(GL_TEXTURE_2D, mesh->getTexture());
             glUniform1i(mesh->getTexture(), 0);
 
-            glDrawElements(GL_TRIANGLES, mesh->getVertices().size(), GL_UNSIGNED_SHORT, (void*)mesh->getOffset());
+            glDrawElements(this->render_type, mesh->getVertices().size(), GL_UNSIGNED_SHORT, (void*)mesh->getOffset());
         }
 
         glDisableVertexAttribArray(0);
@@ -289,6 +314,7 @@ private:
 
     GLuint mvp_uniform{}, view_uniform{}, model_uniform{}, light_uniform{}, texture_uniform{};
     GLuint frame_texture_uniform{};
+    GLuint render_type{GL_TRIANGLES};
 };
 
 #endif //BEATSY_WINDOWWRAPPER_H

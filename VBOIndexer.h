@@ -1,3 +1,4 @@
+#include <cmath>
 #include <vector>
 #include <map>
 
@@ -8,7 +9,7 @@
 
 // Returns true iif v1 can be considered equal to v2
 bool is_near(float v1, float v2){
-	return fabs( v1-v2 ) < 0.01f;
+	return std::fabs( v1-v2 ) < 0.01f;
 }
 
 // Searches through all already-exported vertices
@@ -76,7 +77,7 @@ struct PackedVertex{
 	glm::vec3 position;
 	glm::vec2 uv;
 	glm::vec3 normal;
-	bool operator<(const PackedVertex that) const{
+	bool operator<(const PackedVertex& that) const{
 		return memcmp((void*)this, (void*)&that, sizeof(PackedVertex))>0;
 	};
 };
@@ -86,7 +87,7 @@ bool getSimilarVertexIndex_fast(
 	std::map<PackedVertex,unsigned short> & VertexToOutIndex,
 	unsigned short & result
 ){
-	std::map<PackedVertex,unsigned short>::iterator it = VertexToOutIndex.find(packed);
+	auto it = VertexToOutIndex.find(packed);
 	if ( it == VertexToOutIndex.end() ){
 		return false;
 	}else{

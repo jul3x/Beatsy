@@ -9,11 +9,14 @@ find_package(GLEW REQUIRED)
 find_package(glfw3 REQUIRED)
 find_package(glm REQUIRED)
 
+add_subdirectory(third-party/kissfft)
+
 set(ALL_LIBS
 	${OPENGL_LIBRARY}
 	glfw
 	GLEW
 	glm
+	kissfft
 )
 
 add_definitions(
@@ -24,7 +27,6 @@ add_definitions(
 	-D_CRT_SECURE_NO_WARNINGS
 )
 
-# Tutorial 1
 add_executable(Beatsy main.cpp)
 target_link_libraries(Beatsy
 	${ALL_LIBS}

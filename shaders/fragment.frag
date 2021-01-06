@@ -19,11 +19,11 @@ void main(){
 
     // Light emission properties
     // You probably want to put them as uniforms
-    vec3 LightColor = vec3(1,0.8,0.8);
+    vec3 LightColor = vec3(1,1,6);
     float LightPower = 200.0f;
 
     // Material properties
-    vec3 MaterialDiffuseColor = texture( myTextureSampler, UV ).rgb;
+    vec3 MaterialDiffuseColor = vec3(0.7, 0, 0);
 //    vec3 MaterialDiffuseColor = fragmentColor;
     vec3 MaterialAmbientColor = vec3(0.1,0.1,0.1) * MaterialDiffuseColor;
     vec3 MaterialSpecularColor = vec3(0.1,0.1,0.1);
@@ -60,6 +60,8 @@ void main(){
         MaterialDiffuseColor * LightColor * LightPower * cosTheta / (distance*distance) +
         // Specular : reflective highlight, like a mirror
         MaterialSpecularColor * LightColor * LightPower * pow(cosAlpha,5) / (distance*distance);
+
+//    color = vec3(1.0, 0, 0);
 
 }
 

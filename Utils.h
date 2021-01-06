@@ -37,7 +37,7 @@ public:
         this->normals = normals_;
     }
 
-    const std::vector<glm::vec3>& getVertices() const {
+    std::vector<glm::vec3>& getVertices() {
         return this->vertices;
     }
 
@@ -101,13 +101,58 @@ public:
         model = glm::rotate(model, 0.001f, {0.0, 1, 0});
     }
 
-private:
+protected:
     std::shared_ptr<Model> data;
-
+private:
     size_t indices_offset{};
 
     glm::mat4 model{};
     GLuint texture{};
+
+};
+
+
+class Grid : public Mesh {
+public:
+    explicit Grid(int n) {
+        this->data = std::make_shared<Model>();
+
+        std::vector<glm::vec3> vertices, normals;
+        std::vector<glm::vec2> uvs;
+        for (int j=0; j<=n; ++j) {
+            for (int i=0; i<=n + 1; ++i)
+            {
+                float x = -10 + 20 * (float)i/(float)n;
+                float z = -10 + 20 * (float)j/(float)n;
+
+                uvs.emplace_back(0, 0);
+                normals.emplace_back(0, 1, 0);
+                uvs.emplace_back(0, 0);
+                normals.emplace_back(0, 1, 0);
+                vertices.emplace_back(x, 0, z);
+                vertices.emplace_back(x, 0, z + 20 / (float)n);
+            }
+        }
+        for (int j=0; j<=n + 1; ++j) {
+            for (int i=0; i<=n; ++i)
+            {
+                float x = -10 + 20 * (float)i/(float)n;
+                float z = -10 + 20 * (float)j/(float)n;
+
+                uvs.emplace_back(0, 0);
+                normals.emplace_back(0, 1, 0);
+                uvs.emplace_back(0, 0);
+                normals.emplace_back(0, 1, 0);
+                vertices.emplace_back(x, 0, z);
+                vertices.emplace_back(x + 20/(float)n, 0, z);
+            }
+        }
+
+        this->data->setVertices(vertices);
+        this->data->setUV(uvs);
+        this->data->setNormals(normals);
+
+    }
 
 };
 
