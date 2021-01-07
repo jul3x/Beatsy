@@ -1,7 +1,6 @@
 #include <random>
 
 #include "WindowWrapper.h"
-#include "Shader.h"
 #include "Camera.h"
 #include "FFT.h"
 
@@ -38,15 +37,11 @@ int main() {
 //        ++i;
 //    }
 
-    Grid grid(20);
+    Grid grid(20.0f, 40);
     window_wrapper.bindMesh(grid);
 
 
     window_wrapper.bindBuffers();
-
-    {
-        applyFFT();
-    }
 
     double last_time = glfwGetTime();
     do {
@@ -58,6 +53,7 @@ int main() {
         camera.updateKeys(window_wrapper.getKeysPressed(), time_elapsed);
         camera.update();
 
+        grid.update(window_wrapper, time_elapsed);
 //        for (auto &mesh : meshes)
 //        {
 //            mesh->update();

@@ -19,7 +19,7 @@ void main(){
 
     // Light emission properties
     // You probably want to put them as uniforms
-    vec3 LightColor = vec3(1,1,6);
+    vec3 LightColor = vec3(1,1,1);
     float LightPower = 200.0f;
 
     // Material properties
@@ -61,7 +61,9 @@ void main(){
         // Specular : reflective highlight, like a mirror
         MaterialSpecularColor * LightColor * LightPower * pow(cosAlpha,5) / (distance*distance);
 
-//    color = vec3(1.0, 0, 0);
+
+
+    color = vec3(1.0, 0, 0);
 
 }
 
