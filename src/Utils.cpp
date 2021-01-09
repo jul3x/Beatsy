@@ -79,8 +79,8 @@ GLuint Mesh::getTexture() const {
     return this->texture;
 }
 
-void Mesh::update() {
-    model = glm::rotate(model, 0.001f, {0.0, 1, 0});
+void Mesh::update(double time_elapsed) {
+    model = glm::rotate(model, static_cast<float>(time_elapsed), {0.0, 1, 0});
 }
 
 
@@ -133,24 +133,53 @@ Grid::Grid(float width, int n) {
 
 void Grid::update(WindowWrapper& wrapper, double time_elapsed)
 {
-    static double x = 0.0f;
+    static double x = -1.0f;
     x += time_elapsed;
 
-    auto& new_values = applyFFT(x);
+    if (x <= 0.0f)
+        return;
+
+    std::tuple<const std::vector<float>&, float> new_values = applyFFT(x);
+    static std::vector<float> new_values_mapped(n+1);
+
+    static std::vector<int> range_mapping;
+
+    if (range_mapping.empty())
+    {
+        double fac = std::log(22500) / std::log(n);
+        for (int i = 0; i <= n; ++i)
+        {
+            range_mapping.push_back(std::pow(i, fac));
+        }
+    }
+
+    for (int i = 0; i < n; ++i)
+    {
+        size_t frame_size = 44100 / 4 / n;
+        frame_size = 10;
+        new_values_mapped[i] = 0.0f;
+
+        for (int j = range_mapping[i]; j < range_mapping[i+1]; ++j)
+            new_values_mapped[i] += std::get<0>(new_values)[j];
+
+        new_values_mapped[i] = std::abs(new_values_mapped[i] / frame_size);
+
+    }
 
     for (int i = 0; i <= n; ++i)
     {
         float b = n / 3.0;
         float c = n / 6.0;
-        float A = 2.0 * std::exp(- (i-b)*(i-b) / (2 * c*c));
+        float A = 0.005 * std::exp(- (i-b)*(i-b) / (2 * c*c));
 
         for (int j = 0; j <= n; ++j)
         {
 
-            wrapper.updateVertexY(getIndex(i, j) + this->getOffset(), A *std::abs(new_values[j]));
+            wrapper.updateVertexY(getIndex(i, j) + this->getOffset(), A * (std::abs((1.0 + new_values_mapped[j]))));
         }
     }
 
     wrapper.bindBuffers();
 
+    model = glm::rotate(model, static_cast<float>((0.1 + 0.1 * (1.0 + std::get<1>(new_values))) * time_elapsed), {0.0, 1, 0});
 }

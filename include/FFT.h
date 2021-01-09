@@ -8,12 +8,13 @@
 
 #include <string>
 #include <vector>
+#include <tuple>
 
 #include <mpg123.h>
 
 
 
-const std::vector<float>& applyFFT(double time_point);
+std::tuple<const std::vector<float>&, float> applyFFT(double time_point);
 
 short* loadMp3File(const std::string& name);
 

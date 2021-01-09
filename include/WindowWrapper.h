@@ -25,7 +25,7 @@ public:
     WindowWrapper(const glm::vec2& size, const std::string& title);
 
     void setRenderType(GLuint render_t);
-
+    
     void bindCamera(Camera* camera_);
 
     void updateVertexX(size_t index, float x);

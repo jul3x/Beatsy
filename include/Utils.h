@@ -48,14 +48,14 @@ public:
     const glm::mat4& getModel() const;
     GLuint getTexture() const;
 
-    void update();
+    void update(double time_elapsed);
 
 protected:
     std::shared_ptr<Model> data;
+    glm::mat4 model{};
 private:
     size_t indices_offset{};
 
-    glm::mat4 model{};
     GLuint texture{};
 
 };

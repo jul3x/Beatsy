@@ -19,9 +19,7 @@ set(ALL_LIBS
 	glfw
 	GLEW
 	glm
-
 	Gist
-	mpg123
 )
 
 add_definitions(

@@ -13,8 +13,8 @@ int main() {
 
     window_wrapper.bindCamera(&camera);
 
-    WindowWrapper::colorize(0.02, 0.02, 0.02, 0);
-    window_wrapper.setRenderType(GL_LINES);
+    WindowWrapper::colorize(0.1, 0.1, 0.1, 1.0);
+    window_wrapper.setRenderType(GL_POINTS);
 
     window_wrapper.loadShaders("shaders/vertex.vert", "shaders/fragment.frag");
     window_wrapper.loadScreenShaders("shaders/screen.vert", "shaders/screen.frag");
@@ -23,23 +23,20 @@ int main() {
     std::mt19937 gen;
     std::uniform_int_distribution<int> distrib(-100.0f, 100.0f);
 
-//    GLuint texture = loadBMP_custom("uvtemplate.bmp");
-//    GLuint texture_2 = loadBMP_custom("uvtemplate_2.bmp");
-//    auto cube = std::make_shared<Model>("cube.obj");
-//    auto chair = std::make_shared<Model>("FinalBaseMesh.obj");
-//    std::unique_ptr<Mesh> meshes[1000];
-//    for (auto &mesh : meshes)
-//    {
-//        static int i = 0;
-//        mesh = std::make_unique<Mesh>(i % 2 == 0 ? cube : chair, i % 2 == 0 ? texture : texture_2);
-//        mesh->setModel(glm::translate(glm::mat4(1.0f), {distrib(gen), distrib(gen), distrib(gen)}));
-//        window_wrapper.bindMesh(*mesh);
-//        ++i;
-//    }
-
     Grid grid(20.0f, 40);
     window_wrapper.bindMesh(grid);
 
+    GLuint texture = loadBMP_custom("uvtemplate.bmp");
+    auto cube = std::make_shared<Model>("cube.obj");
+    std::unique_ptr<Mesh> meshes[0];
+    for (auto &mesh : meshes)
+    {
+        static int i = 0;
+        mesh = std::make_unique<Mesh>(cube, texture);
+        mesh->setModel(glm::translate(glm::mat4(1.0f), {distrib(gen), distrib(gen), distrib(gen)}));
+        window_wrapper.bindMesh(*mesh);
+        ++i;
+    }
 
     window_wrapper.bindBuffers();
 
@@ -47,17 +44,16 @@ int main() {
     do {
         double current_time = glfwGetTime();
         double time_elapsed = current_time - last_time;
-//        printf("%lf FPS\n", 1.0 / time_elapsed);
 
         camera.updateMouse(window_wrapper.getMousePos(), time_elapsed);
         camera.updateKeys(window_wrapper.getKeysPressed(), time_elapsed);
         camera.update();
 
         grid.update(window_wrapper, time_elapsed);
-//        for (auto &mesh : meshes)
-//        {
-//            mesh->update();
-//        }
+        for (auto &mesh : meshes)
+        {
+            mesh->update(time_elapsed);
+        }
 
         WindowWrapper::clear();
 

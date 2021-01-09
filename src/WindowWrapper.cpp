@@ -12,6 +12,7 @@ WindowWrapper::WindowWrapper(const glm::vec2& size, const std::string& title) : 
 
     glfwWindowHint(GLFW_SAMPLES, 4);
     glEnable(GL_MULTISAMPLE);
+    glEnable(GL_LINE_SMOOTH);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
