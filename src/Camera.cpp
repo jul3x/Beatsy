@@ -12,6 +12,9 @@ void Camera::setProjection(float fov, float display_start, float display_end) {
 
 void Camera::setView(const glm::vec3& pos, const glm::vec3& look_at, const glm::vec3& rotation) {
     view = glm::lookAt(pos, look_at, rotation);
+    position = pos;
+    direction = look_at - position;
+    up = rotation;
 }
 
 const glm::mat4& Camera::getProjection() const {
@@ -63,4 +66,12 @@ void Camera::updateKeys(const std::list<GLuint>& keys, double time_elapsed) {
 
 void Camera::update() {
     view = glm::lookAt(position,position + direction, up);
+}
+
+const glm::vec3 &Camera::getDirection() const {
+    return direction;
+}
+
+void Camera::setPosition(const glm::vec3 &pos) {
+    position = pos;
 }

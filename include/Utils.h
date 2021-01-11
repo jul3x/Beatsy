@@ -5,12 +5,13 @@
 #ifndef BEATSY_UTILS_H
 #define BEATSY_UTILS_H
 
+#include <vector>
 #include <memory>
 
 #include <glm/gtc/matrix_transform.hpp>
 
-#include <ObjLoader.h>
 #include <Texture.h>
+#include <Camera.h>
 
 class WindowWrapper;
 
@@ -18,17 +19,15 @@ class Model {
 public:
     Model() = default;
 
-    explicit Model(const std::string& obj_path);
-    void loadObject(const std::string& obj_path);
     void setVertices(const std::vector<glm::vec3>& vertices_);
-    void setUV(const std::vector<glm::vec2>& uv_);
+    void setColors(const std::vector<glm::vec3>& color_);
     void setNormals(const std::vector<glm::vec3>& normals_);
     std::vector<glm::vec3>& getVertices();
-    const std::vector<glm::vec2>& getUV() const;
+    const std::vector<glm::vec3>& getColors() const;
     const std::vector<glm::vec3>& getNormals() const;
 private:
     std::vector<glm::vec3> vertices{}, normals{};
-    std::vector<glm::vec2> uv{};
+    std::vector<glm::vec3> colors{};
 };
 
 
@@ -43,7 +42,7 @@ public:
 
     size_t getOffset() const;
     const std::vector<glm::vec3>& getVertices() const;
-    const std::vector<glm::vec2>& getUV() const;
+    const std::vector<glm::vec3>& getColors() const;
     const std::vector<glm::vec3>& getNormals() const;
     const glm::mat4& getModel() const;
     GLuint getTexture() const;
@@ -65,7 +64,7 @@ class Grid : public Mesh {
 public:
     explicit Grid(float width, int n);
 
-    void update(WindowWrapper& wrapper, double time_elapsed);
+    void update(WindowWrapper& wrapper, Camera& camera, double time_elapsed);
 private:
     size_t getIndex(int x, int y) const
     {

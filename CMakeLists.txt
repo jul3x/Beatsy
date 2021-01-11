@@ -18,7 +18,6 @@ set(ALL_LIBS
 	${OPENGL_LIBRARY}
 	glfw
 	GLEW
-	glm
 	Gist
 )
 

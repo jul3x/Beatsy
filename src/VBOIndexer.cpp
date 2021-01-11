@@ -4,6 +4,11 @@
 
 #include <VBOIndexer.h>
 
+bool isNearlyEqual(float x, float y, float err)
+{
+    return std::abs(x - y) < err;
+}
+
 bool getSimilarVertexIndex_fast(
         PackedVertex & packed,
         std::map<PackedVertex,unsigned short> & VertexToOutIndex,
@@ -19,11 +24,11 @@ bool getSimilarVertexIndex_fast(
 }
 
 void indexVBO(const std::vector<glm::vec3> & in_vertices,
-              const std::vector<glm::vec2> & in_uvs,
+              const std::vector<glm::vec3> & in_colors,
               const std::vector<glm::vec3> & in_normals,
               std::vector<unsigned short> & out_indices,
               std::vector<glm::vec3> & out_vertices,
-              std::vector<glm::vec2> & out_uvs,
+              std::vector<glm::vec3> & out_colors,
               std::vector<glm::vec3> & out_normals) {
     static std::map<PackedVertex,unsigned short> VertexToOutIndex;
 
@@ -31,7 +36,7 @@ void indexVBO(const std::vector<glm::vec3> & in_vertices,
     // For each input vertex
     for ( unsigned int i=0; i<in_vertices.size(); i++ ) {
 
-        PackedVertex packed = {in_vertices[i], in_uvs[i], in_normals[i]};
+        PackedVertex packed = {in_vertices[i], in_colors[i], in_normals[i]};
 
 
         // Try to find a similar vertex in out_XXXX
@@ -42,7 +47,7 @@ void indexVBO(const std::vector<glm::vec3> & in_vertices,
             out_indices.push_back( index );
         }else{ // If not, it needs to be added in the output data.
             out_vertices.push_back( in_vertices[i]);
-            out_uvs     .push_back( in_uvs[i]);
+            out_colors     .push_back( in_colors[i]);
             out_normals .push_back( in_normals[i]);
             unsigned short newindex = (unsigned short)out_vertices.size() - 1;
             out_indices .push_back( newindex );

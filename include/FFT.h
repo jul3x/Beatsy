@@ -10,9 +10,6 @@
 #include <vector>
 #include <tuple>
 
-#include <mpg123.h>
-
-
 
 std::tuple<const std::vector<float>&, float> applyFFT(double time_point);
 

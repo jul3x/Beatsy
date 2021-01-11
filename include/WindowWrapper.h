@@ -34,6 +34,8 @@ public:
 
     void updateVertexZ(size_t index, float z);
 
+    void updateVertexColor(size_t index, float r, float g, float b);
+
     static void colorize(float r = 0.0f, float g = 0.0f, float b = 0.0f, float a = 0.0f);
 
     static void clear();
@@ -68,8 +70,8 @@ private:
     std::vector<Mesh*> meshes;
     std::vector<unsigned short> indices;
     std::vector<glm::vec3> vertices, normals;
-    std::vector<glm::vec2> uvs;
-    GLuint vertex_buffer{}, uv_buffer{}, normal_buffer{}, element_buffer{};
+    std::vector<glm::vec3> colors;
+    GLuint vertex_buffer{}, color_buffer{}, normal_buffer{}, element_buffer{};
 
     GLuint mvp_uniform{}, view_uniform{}, model_uniform{}, light_uniform{}, texture_uniform{};
     GLuint frame_texture_uniform{};

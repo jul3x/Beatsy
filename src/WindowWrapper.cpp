@@ -68,7 +68,7 @@ WindowWrapper::WindowWrapper(const glm::vec2& size, const std::string& title) : 
     glDepthFunc(GL_LESS);
 
     glGenBuffers(1, &vertex_buffer);
-    glGenBuffers(1, &uv_buffer);
+    glGenBuffers(1, &color_buffer);
     glGenBuffers(1, &normal_buffer);
     glGenBuffers(1, &element_buffer);
 
@@ -137,8 +137,8 @@ void WindowWrapper::draw() {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
 
     glEnableVertexAttribArray(1);
-    glBindBuffer(GL_ARRAY_BUFFER, uv_buffer);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
+    glBindBuffer(GL_ARRAY_BUFFER, color_buffer);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
 
     glEnableVertexAttribArray(2);
     glBindBuffer(GL_ARRAY_BUFFER, normal_buffer);
@@ -190,7 +190,7 @@ void WindowWrapper::draw() {
 void WindowWrapper::terminate() {
     glDeleteProgram(shader);
     glDeleteBuffers(1, &vertex_buffer);
-    glDeleteBuffers(1, &uv_buffer);
+    glDeleteBuffers(1, &color_buffer);
     glDeleteBuffers(1, &normal_buffer);
     glDeleteBuffers(1, &element_buffer);
     glDeleteBuffers(1, &tex_color_buffer);
@@ -211,15 +211,15 @@ void WindowWrapper::bindMesh(Mesh& mesh) {
     mesh.setOffset(indices.size() * sizeof(unsigned short));
     meshes.emplace_back(&mesh);
 
-    indexVBO(mesh.getVertices(), mesh.getUV(), mesh.getNormals(), indices, vertices, uvs, normals);
+    indexVBO(mesh.getVertices(), mesh.getColors(), mesh.getNormals(), indices, vertices, colors, normals);
 }
 
 void WindowWrapper::bindBuffers() {
     glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
     glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), &vertices[0], GL_STATIC_DRAW);
 
-    glBindBuffer(GL_ARRAY_BUFFER, uv_buffer);
-    glBufferData(GL_ARRAY_BUFFER, uvs.size() * sizeof(glm::vec2), &uvs[0], GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, color_buffer);
+    glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(glm::vec3), &colors[0], GL_STATIC_DRAW);
 
     glBindBuffer(GL_ARRAY_BUFFER, normal_buffer);
     glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), &normals[0], GL_STATIC_DRAW);
@@ -272,4 +272,9 @@ std::list<GLuint> WindowWrapper::getKeysPressed() const {
     }
 
     return key_list;
+}
+
+void WindowWrapper::updateVertexColor(size_t index, float r, float g, float b)
+{
+    colors[index] = glm::vec3(r, g, b);
 }

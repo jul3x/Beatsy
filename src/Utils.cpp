@@ -5,21 +5,14 @@
 #include <Utils.h>
 #include <FFT.h>
 #include <WindowWrapper.h>
-
-Model::Model(const std::string& obj_path) {
-    loadObject(obj_path);
-}
-
-void Model::loadObject(const std::string& obj_path) {
-    loadObj(obj_path.c_str(), this->vertices, this->uv, this->normals);
-}
+#include <Colors.h>
 
 void Model::setVertices(const std::vector<glm::vec3>& vertices_) {
     this->vertices = vertices_;
 }
 
-void Model::setUV(const std::vector<glm::vec2>& uv_) {
-    this->uv = uv_;
+void Model::setColors(const std::vector<glm::vec3>& colors_) {
+    this->colors = colors_;
 }
 
 void Model::setNormals(const std::vector<glm::vec3>& normals_) {
@@ -30,8 +23,8 @@ std::vector<glm::vec3>& Model::getVertices() {
     return this->vertices;
 }
 
-const std::vector<glm::vec2>& Model::getUV() const {
-    return this->uv;
+const std::vector<glm::vec3>& Model::getColors() const {
+    return this->colors;
 }
 
 const std::vector<glm::vec3>& Model::getNormals() const {
@@ -63,8 +56,8 @@ const std::vector<glm::vec3>& Mesh::getVertices() const {
     return this->data->getVertices();
 }
 
-const std::vector<glm::vec2>& Mesh::getUV() const {
-    return this->data->getUV();
+const std::vector<glm::vec3>& Mesh::getColors() const {
+    return this->data->getColors();
 }
 
 const std::vector<glm::vec3>& Mesh::getNormals() const {
@@ -90,7 +83,7 @@ Grid::Grid(float width, int n) {
     this->data = std::make_shared<Model>();
 
     std::vector<glm::vec3> vertices, normals;
-    std::vector<glm::vec2> uvs;
+    std::vector<glm::vec3> colors;
 
     float const_n = width / (float)n;
     float min_coord = - width / 2.0f;
@@ -101,9 +94,11 @@ Grid::Grid(float width, int n) {
         {
             float x = min_coord + i * const_n;
 
-            uvs.emplace_back(0, 0);
+            rgb color_rgb = hsv2rgb({j / (double)(n + 1) * 180, 1.0, 1.0});
+
+            colors.emplace_back(color_rgb.r, color_rgb.g, color_rgb.b);
             normals.emplace_back(0, 1, 0);
-            uvs.emplace_back(0, 0);
+            colors.emplace_back(color_rgb.r, color_rgb.g, color_rgb.b);
             normals.emplace_back(0, 1, 0);
             vertices.emplace_back(x, 0, z);
             vertices.emplace_back(x + const_n, 0, z);
@@ -115,25 +110,38 @@ Grid::Grid(float width, int n) {
         for (int i=0; i<n + 1; ++i)
         {
             float x = min_coord + i * const_n;
+            rgb color_rgb = hsv2rgb({j / (double)(n + 1) * 180, 1.0, 1.0});
 
-            uvs.emplace_back(0, 0);
+            colors.emplace_back(color_rgb.r, color_rgb.g, color_rgb.b);
             normals.emplace_back(0, 1, 0);
-            uvs.emplace_back(0, 0);
+            colors.emplace_back(color_rgb.r, color_rgb.g, color_rgb.b);
             normals.emplace_back(0, 1, 0);
             vertices.emplace_back(x, 0, z);
             vertices.emplace_back(x, 0, z + const_n);
         }
     }
+//
+//    for (int j=-2*n; j<5*n; ++j) {
+//        float z = min_coord + j * const_n;
+//        for (int i=-2 * n; i< 5*n + 1; ++i)
+//        {
+//            float x = min_coord + i * const_n;
+//
+//            colors.emplace_back(1, 0, 0);
+//            normals.emplace_back(0, 1, 0);
+//            vertices.emplace_back(x, 0, z);
+//        }
+//    }
 
     this->data->setVertices(vertices);
-    this->data->setUV(uvs);
+    this->data->setColors(colors);
     this->data->setNormals(normals);
 
 }
 
-void Grid::update(WindowWrapper& wrapper, double time_elapsed)
+void Grid::update(WindowWrapper& wrapper, Camera& camera, double time_elapsed)
 {
-    static double x = -1.0f;
+    static double x = -1.2f;
     x += time_elapsed;
 
     if (x <= 0.0f)
@@ -168,18 +176,36 @@ void Grid::update(WindowWrapper& wrapper, double time_elapsed)
 
     for (int i = 0; i <= n; ++i)
     {
-        float b = n / 3.0;
+        float b = n / 2.0;
         float c = n / 6.0;
         float A = 0.005 * std::exp(- (i-b)*(i-b) / (2 * c*c));
 
         for (int j = 0; j <= n; ++j)
         {
+            float new_value = A * (std::abs((1.0 + new_values_mapped[j])));
+            wrapper.updateVertexY(getIndex(i, j), new_value);
 
-            wrapper.updateVertexY(getIndex(i, j) + this->getOffset(), A * (std::abs((1.0 + new_values_mapped[j]))));
+//            wrapper.updateVertexColor(getIndex(i, j), 0.1 + new_value, 0.1 + new_value, 0.1 + new_value);
         }
     }
 
     wrapper.bindBuffers();
+    static glm::vec3 camera_pos = camera.getPosition();
+    static std::list<float> values;
 
-    model = glm::rotate(model, static_cast<float>((0.1 + 0.1 * (1.0 + std::get<1>(new_values))) * time_elapsed), {0.0, 1, 0});
+    values.push_back(std::get<1>(new_values));
+
+    if (values.size () > 10)
+        values.pop_front();
+
+    float mean = 0.0f;
+    for (float value : values)
+    {
+        mean += value;
+    }
+    mean /= values.size();
+
+    camera.setPosition(camera_pos - camera.getDirection() * 0.002f * mean);
+    model = glm::rotate(model, static_cast<float>((0.1 + 0.03 * (1.0 + mean)) * time_elapsed), {0.0, 1, 0});
+
 }

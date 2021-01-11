@@ -21,6 +21,9 @@ public:
     const glm::mat4& getProjection() const;
     const glm::mat4& getView() const;
     const glm::vec3& getPosition() const;
+    const glm::vec3& getDirection() const;
+    void setPosition(const glm::vec3& pos);
+
     void updateMouse(const glm::vec2& mouse, double time_elapsed);
     void updateKeys(const std::list<GLuint>& keys, double time_elapsed);
     void update();
@@ -36,7 +39,7 @@ private:
     double vertical_angle{0.0};
 
     double speed{30.0};
-    double mouse_speed{2.0};
+    double mouse_speed{0.5};
 
 };
 
