@@ -18,7 +18,7 @@
         "size": 40.0,
         "count": 40,
         "r": -1, "g": -1, "b": -1,
-        "border": "const"
+        "border": "fade"
     },
     "audio": {
         "path": "test.wav",
