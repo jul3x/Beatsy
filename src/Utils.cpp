@@ -6,6 +6,7 @@
 #include <FFT.h>
 #include <WindowWrapper.h>
 #include <Colors.h>
+#include <Config.h>
 
 void Model::setVertices(const std::vector<glm::vec3>& vertices_) {
     this->vertices = vertices_;
@@ -93,8 +94,11 @@ Grid::Grid(float width, int n) {
         for (int i=0; i<n; ++i)
         {
             float x = min_coord + i * const_n;
-
-            rgb color_rgb = hsv2rgb({j / (double)(n + 1) * 180, 1.0, 1.0});
+            rgb color_rgb;
+            if (CONF("grid")["r"].asFloat() == -1)
+                color_rgb = hsv2rgb({j / (double)(n + 1) * 180, 1.0, 1.0});
+            else
+                color_rgb = {CONF("grid")["r"].asFloat(), CONF("grid")["g"].asFloat(), CONF("grid")["b"].asFloat()};
 
             colors.emplace_back(color_rgb.r, color_rgb.g, color_rgb.b);
             normals.emplace_back(0, 1, 0);
@@ -110,7 +114,11 @@ Grid::Grid(float width, int n) {
         for (int i=0; i<n + 1; ++i)
         {
             float x = min_coord + i * const_n;
-            rgb color_rgb = hsv2rgb({j / (double)(n + 1) * 180, 1.0, 1.0});
+            rgb color_rgb;
+            if (CONF("grid")["r"].asFloat() == -1)
+                color_rgb = hsv2rgb({j / (double)(n + 1) * 180, 1.0, 1.0});
+            else
+                color_rgb = {CONF("grid")["r"].asFloat(), CONF("grid")["g"].asFloat(), CONF("grid")["b"].asFloat()};
 
             colors.emplace_back(color_rgb.r, color_rgb.g, color_rgb.b);
             normals.emplace_back(0, 1, 0);
@@ -120,18 +128,25 @@ Grid::Grid(float width, int n) {
             vertices.emplace_back(x, 0, z + const_n);
         }
     }
-//
-//    for (int j=-2*n; j<5*n; ++j) {
-//        float z = min_coord + j * const_n;
-//        for (int i=-2 * n; i< 5*n + 1; ++i)
-//        {
-//            float x = min_coord + i * const_n;
-//
-//            colors.emplace_back(1, 0, 0);
-//            normals.emplace_back(0, 1, 0);
-//            vertices.emplace_back(x, 0, z);
-//        }
-//    }
+
+    if (CONF("grid")["border"].asString() == "const") {
+        for (int j=-2*n; j<5*n; ++j) {
+            float z = min_coord + j * const_n;
+            for (int i=-2 * n; i< 5*n + 1; ++i)
+            {
+                rgb color_rgb;
+                if (CONF("grid")["r"].asFloat() == -1)
+                    color_rgb = hsv2rgb({ std::min(std::max(0, j) / (double)(n + 1) * 180, 360.0), 1.0, 1.0});
+                else
+                    color_rgb = {CONF("grid")["r"].asFloat(), CONF("grid")["g"].asFloat(), CONF("grid")["b"].asFloat()};
+                float x = min_coord + i * const_n;
+
+                colors.emplace_back(color_rgb.r, color_rgb.g, color_rgb.b);
+                normals.emplace_back(0, 1, 0);
+                vertices.emplace_back(x, 0, z);
+            }
+        }
+    }
 
     this->data->setVertices(vertices);
     this->data->setColors(colors);
@@ -141,7 +156,7 @@ Grid::Grid(float width, int n) {
 
 void Grid::update(WindowWrapper& wrapper, Camera& camera, double time_elapsed)
 {
-    static double x = -1.2f;
+    static double x = CONF("audio")["offset"].asFloat();
     x += time_elapsed;
 
     if (x <= 0.0f)
@@ -177,15 +192,24 @@ void Grid::update(WindowWrapper& wrapper, Camera& camera, double time_elapsed)
     for (int i = 0; i <= n; ++i)
     {
         float b = n / 2.0;
-        float c = n / 6.0;
-        float A = 0.005 * std::exp(- (i-b)*(i-b) / (2 * c*c));
+        float c = n * CONF("audio")["spread_factor"].asFloat();
+        float A = CONF("audio")["height"].asFloat() * std::exp(- (i-b)*(i-b) / (2 * c*c));
 
         for (int j = 0; j <= n; ++j)
         {
             float new_value = A * (std::abs((1.0 + new_values_mapped[j])));
             wrapper.updateVertexY(getIndex(i, j), new_value);
 
-//            wrapper.updateVertexColor(getIndex(i, j), 0.1 + new_value, 0.1 + new_value, 0.1 + new_value);
+            if (CONF("grid")["border"].asString() == "fade") {
+                rgb color_rgb;
+                if (CONF("grid")["r"].asFloat() == -1)
+                    color_rgb = hsv2rgb({ std::min(std::max(0, j) / (double)(n + 1) * 180, 360.0), 1.0, 0.1 + new_value});
+                else
+                    color_rgb = {0.1 + new_value * CONF("grid")["r"].asFloat(),
+                                 0.1 + new_value * CONF("grid")["g"].asFloat(),
+                                 0.1 + new_value * CONF("grid")["b"].asFloat()};
+                wrapper.updateVertexColor(getIndex(i, j), color_rgb.r,  color_rgb.g,  color_rgb.b);
+            }
         }
     }
 
@@ -205,7 +229,10 @@ void Grid::update(WindowWrapper& wrapper, Camera& camera, double time_elapsed)
     }
     mean /= values.size();
 
-    camera.setPosition(camera_pos - camera.getDirection() * 0.002f * mean);
-    model = glm::rotate(model, static_cast<float>((0.1 + 0.03 * (1.0 + mean)) * time_elapsed), {0.0, 1, 0});
-
+    if (CONF("camera")["lock"].asBool())
+    {
+        camera.setPosition(camera_pos - camera.getDirection() * CONF("camera")["movement"]["zoom_speed"].asFloat() * mean);
+        model = glm::rotate(model, static_cast<float>((CONF("camera")["movement"]["base_rot_speed"].asFloat() +
+                                                       CONF("camera")["movement"]["rot_speed"].asFloat() * (1.0 + mean)) * time_elapsed), {0.0, 1, 0});
+    }
 }

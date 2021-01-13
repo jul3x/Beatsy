@@ -1,0 +1,29 @@
+{
+    "window": {"x": 1920, "y": 1080, "blur": false},
+    "camera": {
+        "fov": 90.0, "display_start": 0.1, "display_end": 100.0,
+        "pos": {
+            "x": 10, "y": 20, "z": 10
+        },
+        "movement": {
+            "base_rot_speed": 0.1,
+            "rot_speed": 0.03,
+            "zoom_speed": 0.002
+        },
+        "lock": true
+    },
+    "bg": {"r": 0.05, "g": 0.05, "b": 0.05},
+    "grid": {
+        "type": "points",
+        "size": 40.0,
+        "count": 20,
+        "r": 1, "g": 1, "b": 1,
+        "border": "const"
+    },
+    "audio": {
+        "path": "test.wav",
+        "offset": -1.1,
+        "spread_factor": 0.166,
+        "height": 0.004
+    }
+}

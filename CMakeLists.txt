@@ -1,6 +1,8 @@
 # CMake entry point
-cmake_minimum_required (VERSION 3.6)
+cmake_minimum_required (VERSION 3.8)
 project (Beatsy)
+
+set(CMAKE_CXX_STANDARD 17)
 
 include_directories(include/)
 
@@ -13,12 +15,14 @@ find_package(glm REQUIRED)
 
 add_subdirectory(third-party/kissfft)
 add_subdirectory(third-party/Gist)
+add_subdirectory(third-party/jsoncpp)
 
 set(ALL_LIBS
 	${OPENGL_LIBRARY}
 	glfw
 	GLEW
 	Gist
+	jsoncpp_lib
 )
 
 add_definitions(

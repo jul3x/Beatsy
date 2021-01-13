@@ -1,5 +1,6 @@
 //
-// Created by jul3x on 11.01.2021.
+// https://stackoverflow.com/questions/3018313/algorithm-to-convert-rgb-to-hsv-and-hsv-to-rgb-in-range-0-255-for-both
+// author: David H
 //
 
 #ifndef BEATSY_COLORS_H
