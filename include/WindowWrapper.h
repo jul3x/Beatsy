@@ -54,9 +54,9 @@ public:
 
     void loadScreenShaders(const std::string& vert, const std::string& frag);
 
-    glm::vec2 getMousePos() const;
+    [[nodiscard]] glm::vec2 getMousePos() const;
 
-    std::list<GLuint> getKeysPressed() const;
+    [[nodiscard]] std::list<GLuint> getKeysPressed() const;
 
 private:
     GLFWwindow* window{nullptr};

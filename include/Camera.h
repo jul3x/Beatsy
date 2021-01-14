@@ -18,10 +18,10 @@ public:
     explicit Camera(const glm::vec2& window_size_);
     void setProjection(float fov, float display_start, float display_end);
     void setView(const glm::vec3& pos, const glm::vec3& look_at, const glm::vec3& rotation);
-    const glm::mat4& getProjection() const;
-    const glm::mat4& getView() const;
-    const glm::vec3& getPosition() const;
-    const glm::vec3& getDirection() const;
+    [[nodiscard]] const glm::mat4& getProjection() const;
+    [[nodiscard]] const glm::mat4& getView() const;
+    [[nodiscard]] const glm::vec3& getPosition() const;
+    [[nodiscard]] const glm::vec3& getDirection() const;
     void setPosition(const glm::vec3& pos);
 
     void updateMouse(const glm::vec2& mouse, double time_elapsed);

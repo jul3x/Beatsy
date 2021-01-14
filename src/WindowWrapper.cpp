@@ -3,6 +3,7 @@
 //
 
 #include <WindowWrapper.h>
+#include <Config.h>
 
 WindowWrapper::WindowWrapper(const glm::vec2& size, const std::string& title) : window_size(size) {
     if (!glfwInit())
@@ -18,7 +19,8 @@ WindowWrapper::WindowWrapper(const glm::vec2& size, const std::string& title) : 
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    window = glfwCreateWindow(size.x, size.y, title.c_str(), nullptr, nullptr);
+    auto* monitor = CONF("window")["full_screen"].asBool() ? glfwGetPrimaryMonitor() : nullptr;
+    window = glfwCreateWindow(size.x, size.y, title.c_str(), monitor, nullptr);
     if (window == nullptr)
     {
         glfwTerminate();

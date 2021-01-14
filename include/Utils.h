@@ -10,7 +10,7 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
-#include <Texture.h>
+#include <Audio.h>
 #include <Camera.h>
 
 class WindowWrapper;
@@ -23,8 +23,8 @@ public:
     void setColors(const std::vector<glm::vec3>& color_);
     void setNormals(const std::vector<glm::vec3>& normals_);
     std::vector<glm::vec3>& getVertices();
-    const std::vector<glm::vec3>& getColors() const;
-    const std::vector<glm::vec3>& getNormals() const;
+    [[nodiscard]] const std::vector<glm::vec3>& getColors() const;
+    [[nodiscard]] const std::vector<glm::vec3>& getNormals() const;
 private:
     std::vector<glm::vec3> vertices{}, normals{};
     std::vector<glm::vec3> colors{};
@@ -40,12 +40,12 @@ public:
 
     void setOffset(size_t indices);
 
-    size_t getOffset() const;
-    const std::vector<glm::vec3>& getVertices() const;
-    const std::vector<glm::vec3>& getColors() const;
-    const std::vector<glm::vec3>& getNormals() const;
-    const glm::mat4& getModel() const;
-    GLuint getTexture() const;
+    [[nodiscard]] size_t getOffset() const;
+    [[nodiscard]] const std::vector<glm::vec3>& getVertices() const;
+    [[nodiscard]] const std::vector<glm::vec3>& getColors() const;
+    [[nodiscard]] const std::vector<glm::vec3>& getNormals() const;
+    [[nodiscard]] const glm::mat4& getModel() const;
+    [[nodiscard]] GLuint getTexture() const;
 
     void update(double time_elapsed);
 
@@ -62,17 +62,20 @@ private:
 
 class Grid : public Mesh {
 public:
-    explicit Grid(float width, int n);
+    explicit Grid(const Audio& audio, float width, int n);
 
-    void update(WindowWrapper& wrapper, Camera& camera, double time_elapsed);
+    void update(WindowWrapper& wrapper, Camera& camera, Audio& audio, double time_elapsed);
 private:
-    size_t getIndex(int x, int y) const
+    [[nodiscard]] size_t getIndex(int x, int y) const
     {
         return y * (n + 1) + x;
     }
 
-    float width;
+    double time_point;
     int n;
+
+    std::vector<float> cummulated_values;
+    std::vector<int> range_mapping;
 
 };
 

@@ -3,7 +3,7 @@
 //
 
 #include <Utils.h>
-#include <FFT.h>
+#include <Audio.h>
 #include <WindowWrapper.h>
 #include <Colors.h>
 #include <Config.h>
@@ -78,10 +78,18 @@ void Mesh::update(double time_elapsed) {
 }
 
 
-Grid::Grid(float width, int n) {
-    this->width = width;
+Grid::Grid(const Audio& audio, float width, int n) {
     this->n = n;
     this->data = std::make_shared<Model>();
+    this->time_point = CONF("audio")["offset"].asFloat();
+
+    this->cummulated_values.resize(n+1);
+
+    double fac = std::log(audio.getSampleRate() / 2) / std::log(n);
+    for (int i = 0; i <= n; ++i)
+    {
+        range_mapping.push_back(std::pow(i, fac));
+    }
 
     std::vector<glm::vec3> vertices, normals;
     std::vector<glm::vec3> colors;
@@ -154,39 +162,21 @@ Grid::Grid(float width, int n) {
 
 }
 
-void Grid::update(WindowWrapper& wrapper, Camera& camera, double time_elapsed)
+void Grid::update(WindowWrapper& wrapper, Camera& camera, Audio& audio, double time_elapsed)
 {
-    static double x = CONF("audio")["offset"].asFloat();
-    x += time_elapsed;
+    time_point += time_elapsed;
 
-    if (x <= 0.0f)
-        return;
-
-    std::tuple<const std::vector<float>&, float> new_values = applyFFT(x);
-    static std::vector<float> new_values_mapped(n+1);
-
-    static std::vector<int> range_mapping;
-
-    if (range_mapping.empty())
-    {
-        double fac = std::log(22500) / std::log(n);
-        for (int i = 0; i <= n; ++i)
-        {
-            range_mapping.push_back(std::pow(i, fac));
-        }
-    }
+    std::tuple<const std::vector<float>&, float> new_values = audio.getAnalizedData(time_point);
 
     for (int i = 0; i < n; ++i)
     {
-        size_t frame_size = 44100 / 4 / n;
-        frame_size = 10;
-        new_values_mapped[i] = 0.0f;
+        size_t frame_size = 10;
+        cummulated_values[i] = 0.0f;
 
         for (int j = range_mapping[i]; j < range_mapping[i+1]; ++j)
-            new_values_mapped[i] += std::get<0>(new_values)[j];
+            cummulated_values[i] += std::get<0>(new_values)[j];
 
-        new_values_mapped[i] = std::abs(new_values_mapped[i] / frame_size);
-
+        cummulated_values[i] = std::abs(cummulated_values[i] / frame_size);
     }
 
     for (int i = 0; i <= n; ++i)
@@ -197,17 +187,17 @@ void Grid::update(WindowWrapper& wrapper, Camera& camera, double time_elapsed)
 
         for (int j = 0; j <= n; ++j)
         {
-            float new_value = A * (std::abs((1.0 + new_values_mapped[j])));
+            float new_value = A * (std::abs((1.0 + cummulated_values[j])));
             wrapper.updateVertexY(getIndex(i, j), new_value);
 
             if (CONF("grid")["border"].asString() == "fade") {
                 rgb color_rgb;
                 if (CONF("grid")["r"].asFloat() == -1)
-                    color_rgb = hsv2rgb({ std::min(std::max(0, j) / (double)(n + 1) * 180, 360.0), 1.0, 0.1 + new_value});
+                    color_rgb = hsv2rgb({ std::min(std::max(0, j) / (double)(n + 1) * 180, 360.0), 1.0, new_value});
                 else
-                    color_rgb = {0.1 + new_value * CONF("grid")["r"].asFloat(),
-                                 0.1 + new_value * CONF("grid")["g"].asFloat(),
-                                 0.1 + new_value * CONF("grid")["b"].asFloat()};
+                    color_rgb = {new_value * CONF("grid")["r"].asFloat(),
+                                 new_value * CONF("grid")["g"].asFloat(),
+                                 new_value * CONF("grid")["b"].asFloat()};
                 wrapper.updateVertexColor(getIndex(i, j), color_rgb.r,  color_rgb.g,  color_rgb.b);
             }
         }
@@ -233,6 +223,6 @@ void Grid::update(WindowWrapper& wrapper, Camera& camera, double time_elapsed)
     {
         camera.setPosition(camera_pos - camera.getDirection() * CONF("camera")["movement"]["zoom_speed"].asFloat() * mean);
         model = glm::rotate(model, static_cast<float>((CONF("camera")["movement"]["base_rot_speed"].asFloat() +
-                                                       CONF("camera")["movement"]["rot_speed"].asFloat() * (1.0 + mean)) * time_elapsed), {0.0, 1, 0});
+           CONF("camera")["movement"]["rot_speed"].asFloat() * (1.0 + mean)) * time_elapsed), {0.0, 1, 0});
     }
 }

@@ -4,7 +4,7 @@
 #include "Config.h"
 #include "WindowWrapper.h"
 #include "Camera.h"
-#include "FFT.h"
+#include "Audio.h"
 
 int main(int argc, char** argv) {
     if (argc != 2)
@@ -41,7 +41,8 @@ int main(int argc, char** argv) {
     else
         window_wrapper.loadScreenShaders("shaders/screen.vert", "shaders/screen.frag");
 
-    Grid grid(CONF("grid")["size"].asFloat(), CONF("grid")["count"].asInt());
+    Audio audio(CONF("audio")["path"].asString());
+    Grid grid(audio, CONF("grid")["size"].asFloat(), CONF("grid")["count"].asInt());
     window_wrapper.bindMesh(grid);
 
     window_wrapper.bindBuffers();
@@ -58,7 +59,7 @@ int main(int argc, char** argv) {
         }
         camera.update();
 
-        grid.update(window_wrapper, camera, time_elapsed);
+        grid.update(window_wrapper, camera, audio, time_elapsed);
 
         WindowWrapper::clear();
 

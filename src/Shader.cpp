@@ -23,7 +23,6 @@ GLuint LoadShaders(const std::string& vertex_file_path, const std::string& fragm
         throw std::invalid_argument("Impossible to open " + vertex_file_path + ".\n");
     }
 
-    // Read the Fragment Shader code from the file
     std::string FragmentShaderCode;
     std::ifstream FragmentShaderStream(fragment_file_path, std::ios::in);
     if (FragmentShaderStream.is_open())
@@ -41,7 +40,6 @@ GLuint LoadShaders(const std::string& vertex_file_path, const std::string& fragm
     glShaderSource(VertexShaderID, 1, &VertexSourcePointer, nullptr);
     glCompileShader(VertexShaderID);
 
-    // Check Vertex Shader
     std::cout << "Compiling shader: " << vertex_file_path << std::endl;
     glGetShaderiv(VertexShaderID, GL_COMPILE_STATUS, &Result);
     glGetShaderiv(VertexShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
@@ -52,13 +50,11 @@ GLuint LoadShaders(const std::string& vertex_file_path, const std::string& fragm
         std::cerr << &VertexShaderErrorMessage[0] << std::endl;
     }
 
-    // Compile Fragment Shader
     std::cout << "Compiling shader: " << fragment_file_path << std::endl;
     char const* FragmentSourcePointer = FragmentShaderCode.c_str();
     glShaderSource(FragmentShaderID, 1, &FragmentSourcePointer, nullptr);
     glCompileShader(FragmentShaderID);
 
-    // Check Fragment Shader
     glGetShaderiv(FragmentShaderID, GL_COMPILE_STATUS, &Result);
     glGetShaderiv(FragmentShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
     if (InfoLogLength > 0)
@@ -68,14 +64,12 @@ GLuint LoadShaders(const std::string& vertex_file_path, const std::string& fragm
         std::cerr << &FragmentShaderErrorMessage[0] << std::endl;
     }
 
-    // Link the program
     std::cout << "Linking program..." << std::endl;
     GLuint ProgramID = glCreateProgram();
     glAttachShader(ProgramID, VertexShaderID);
     glAttachShader(ProgramID, FragmentShaderID);
     glLinkProgram(ProgramID);
 
-    // Check the program
     glGetProgramiv(ProgramID, GL_LINK_STATUS, &Result);
     glGetProgramiv(ProgramID, GL_INFO_LOG_LENGTH, &InfoLogLength);
     if (InfoLogLength > 0)
