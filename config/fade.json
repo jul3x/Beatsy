@@ -22,7 +22,7 @@
     },
     "audio": {
         "path": "test.wav",
-        "offset": -1.0,
+        "offset": -0.9,
         "spread_factor": 0.166,
         "height": 0.004
     }
